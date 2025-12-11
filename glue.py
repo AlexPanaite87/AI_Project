@@ -3,7 +3,7 @@ import math
 import random
 import os
 
-BOARD_DIMENSION = 9
+BOARD_DIMENSION = 4
 BLOCK_SIZE = int(math.sqrt(BOARD_DIMENSION))
 FILENAME = 'startup.json'
 
@@ -72,4 +72,3 @@ def save_new_board(board):
             json.dump(all_data, f, ensure_ascii=False, indent=4)
     except IOError as e:
         print(f"Error: {e}")
-

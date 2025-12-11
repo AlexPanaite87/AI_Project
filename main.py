@@ -1,29 +1,49 @@
 import tkinter as tk
+from tkinter import messagebox
 import glue as g
 
-class MockUI:
+GRID_SIZE = g.BOARD_DIMENSION
+BLOCK_SIZE = g.BLOCK_SIZE
+
+class SudokuUI:
     def __init__(self, root, start_board, generate_callback):
         self.root = root
         self.root.title("Sudoku")
         self.generate_callback = generate_callback
-        self.row_labels = []
+        self.cells = {}
 
-        tk.Label(root, text="Current Board (from glue.py):").pack()
+        self.configure_menu()
 
-        for row in start_board:
-            lbl = tk.Label(root, text=str(row), font=("Consolas", 12))
-            lbl.pack()
-            self.row_labels.append(lbl)
+    def configure_menu(self):
+        """Creeaza si seteaza bara de meniu"""
+        menu_bar = tk.Menu(self.root)
+        self.root.config(menu = menu_bar)
 
-        tk.Button(root, text="New Board", command=self.on_generate_btn_click).pack(pady=20)
+        game_menu = tk.Menu(menu_bar,tearoff=0)
+        game_menu.add_command(label="New Game", command=self.on_generate_btn_click)
+        game_menu.add_command(label="Solve", command=self.solve_sudoku)
+        game_menu.add_separator()
+        game_menu.add_command(label="Exit", command=self.exit_app)
+        menu_bar.add_cascade(label="Game", menu=game_menu)
+
+        help_menu = tk.Menu(menu_bar, tearoff = 0)
+        help_menu.add_command(label="About", command=self.show_about)
+        menu_bar.add_cascade(label ="Help", menu=help_menu)
+
+    def exit_app(self):
+        """"Inchide aplicatia"""
+        self.root.quit()
+
+    def show_about(self):
+        """Despre aplicatie"""
+        about_text = "Sudoku Solver 4x4"
+        messagebox.showinfo("Despre Sudoku", about_text)
 
     def on_generate_btn_click(self):
-        new_board = self.generate_callback()
-        self.update_display(new_board)
+        messagebox.showinfo("Trebuie implementata")
 
-    def update_display(self, board):
-        for i, row in enumerate(board):
-            self.row_labels[i].config(text=str(row))
+    def solve_sudoku(self):
+        messagebox.showinfo("Trebuie implementata")
 
 
 def main():
@@ -47,7 +67,7 @@ def main():
         g.save_new_board(new_board)
         return new_board
 
-    app = MockUI(root, start_board, handle_generate_new)
+    app = SudokuUI(root, start_board, handle_generate_new)
     root.mainloop()
 
 
