@@ -1,11 +1,12 @@
-import json
 import math
 import random
 import os
+import json
 
 BOARD_DIMENSION = 4
 BLOCK_SIZE = int(math.sqrt(BOARD_DIMENSION))
-FILENAME = 'startup.json'
+FILENAME = 'sudoku_boards.json'
+
 
 def validate_board(board):
     for row in board:
@@ -32,43 +33,71 @@ def validate_board(board):
                         nums.append(val)
             if len(nums) != len(set(nums)):
                 return False
+
     return True
 
 
 def create_valid_board_structure():
-    while True:
-        board = [[0] * BOARD_DIMENSION for _ in range(BOARD_DIMENSION)]
+    board = [[0] * BOARD_DIMENSION for _ in range(BOARD_DIMENSION)]
 
-        for i in range(BOARD_DIMENSION):
-            j = random.randint(0, BOARD_DIMENSION - 1)
-            val = random.randint(1, BOARD_DIMENSION)
-            board[i][j] = val
+    for i in range(0, BOARD_DIMENSION, BLOCK_SIZE):
+        nums = list(range(1, BOARD_DIMENSION + 1))
+        random.shuffle(nums)
+        num_idx = 0
+        for r in range(BLOCK_SIZE):
+            for c in range(BLOCK_SIZE):
+                board[i + r][i + c] = nums[num_idx]
+                num_idx += 1
 
-        if validate_board(board):
+    try:
+        import brain
+
+        solved_board = brain.solve_sudoku_forward_checking(board)
+
+        if solved_board is None:
             return board
+
+        board = solved_board
+    except Exception as e:
+        print(f"Eroare la generare cu Brain: {e}")
+        return board
+
+    total_cells = BOARD_DIMENSION * BOARD_DIMENSION
+    remove_percentage = 0.65
+    cells_to_remove = int(total_cells * remove_percentage)
+
+    while cells_to_remove > 0:
+        row = random.randint(0, BOARD_DIMENSION - 1)
+        col = random.randint(0, BOARD_DIMENSION - 1)
+
+        if board[row][col] != 0:
+            board[row][col] = 0
+            cells_to_remove -= 1
+
+    return board
+
 
 def load_all_boards():
     if not os.path.exists(FILENAME):
         return {}
-
     try:
         with open(FILENAME, 'r', encoding='utf-8') as f:
-            data = json.load(f)
-            return data
-    except (json.JSONDecodeError, IOError):
+            return json.load(f)
+    except Exception:
         return {}
 
 
 def save_new_board(board):
     all_data = load_all_boards()
-
     board_key = f"{BOARD_DIMENSION}x{BOARD_DIMENSION}"
+
     if board_key not in all_data:
         all_data[board_key] = []
+
     all_data[board_key].append(board)
 
     try:
         with open(FILENAME, 'w', encoding='utf-8') as f:
-            json.dump(all_data, f, ensure_ascii=False, indent=4)
+            json.dump(all_data, f, indent=4)
     except IOError as e:
-        print(f"Error: {e}")
+        print(f"Eroare la salvare: {e}")

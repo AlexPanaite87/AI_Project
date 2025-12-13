@@ -1,75 +1,122 @@
 import tkinter as tk
 from tkinter import messagebox
-import glue as g
+import glue as g  # The Glue
+import brain as b  # The Brain (Algoritmul tău)
 
-GRID_SIZE = g.BOARD_DIMENSION
-BLOCK_SIZE = g.BLOCK_SIZE
 
 class SudokuUI:
-    def __init__(self, root, start_board, generate_callback):
+    def __init__(self, root):
         self.root = root
-        self.root.title("Sudoku")
-        self.generate_callback = generate_callback
+        self.root.title(f"Sudoku Solver {g.BOARD_DIMENSION}x{g.BOARD_DIMENSION}")
+
         self.cells = {}
 
         self.configure_menu()
 
-    def configure_menu(self):
-        """Creeaza si seteaza bara de meniu"""
-        menu_bar = tk.Menu(self.root)
-        self.root.config(menu = menu_bar)
+        self.draw_grid()
 
-        game_menu = tk.Menu(menu_bar,tearoff=0)
+        self.on_generate_btn_click()
+
+    def configure_menu(self):
+        menu_bar = tk.Menu(self.root)
+        self.root.config(menu=menu_bar)
+
+        game_menu = tk.Menu(menu_bar, tearoff=0)
         game_menu.add_command(label="New Game", command=self.on_generate_btn_click)
         game_menu.add_command(label="Solve", command=self.solve_sudoku)
         game_menu.add_separator()
-        game_menu.add_command(label="Exit", command=self.exit_app)
+        game_menu.add_command(label="Exit", command=self.root.quit)
         menu_bar.add_cascade(label="Game", menu=game_menu)
 
-        help_menu = tk.Menu(menu_bar, tearoff = 0)
+        help_menu = tk.Menu(menu_bar, tearoff=0)
         help_menu.add_command(label="About", command=self.show_about)
-        menu_bar.add_cascade(label ="Help", menu=help_menu)
-
-    def exit_app(self):
-        """"Inchide aplicatia"""
-        self.root.quit()
+        menu_bar.add_cascade(label="Help", menu=help_menu)
 
     def show_about(self):
-        """Despre aplicatie"""
-        about_text = "Sudoku Solver 4x4"
-        messagebox.showinfo("Despre Sudoku", about_text)
+        msg = f"Sudoku {g.BOARD_DIMENSION}x{g.BOARD_DIMENSION}\nAlgoritm: Forward Checking\n\nEchipa:\n- Alex (The Glue)\n- Iustina (The Face)\n- Sorina (The Brain)"
+        messagebox.showinfo("About", msg)
+
+    def draw_grid(self):
+        main_frame = tk.Frame(self.root, padx=10, pady=10)
+        main_frame.pack()
+
+        vcmd = (self.root.register(self.validate_input), '%P')
+
+        for r in range(g.BOARD_DIMENSION):
+            for c in range(g.BOARD_DIMENSION):
+                block_row = r // g.BLOCK_SIZE
+                block_col = c // g.BLOCK_SIZE
+                is_colored = (block_row + block_col) % 2 == 0
+                bg_color = '#e6e6e6' if is_colored else 'white'
+
+                entry = tk.Entry(main_frame, width=3, font=('Arial', 20),
+                                 justify='center', bg=bg_color, relief='solid', bd=1,
+                                 validate='key', validatecommand=vcmd)
+
+                # Grid placement
+                entry.grid(row=r, column=c, padx=1, pady=1, ipady=5)
+                self.cells[(r, c)] = entry
+
+    def validate_input(self, new_value):
+        if new_value == "": return True
+        return new_value.isdigit()
+
+    def fill_grid(self, board):
+        for r in range(g.BOARD_DIMENSION):
+            for c in range(g.BOARD_DIMENSION):
+                ent = self.cells[(r, c)]
+                val = board[r][c]
+                ent.config(state='normal')
+                ent.delete(0, tk.END)
+
+                if val != 0:
+                    ent.insert(0, str(val))
+                    ent.config(fg='blue')
+                else:
+                    ent.config(fg='black')
+
+    def get_board_from_ui(self):
+        board = []
+        for r in range(g.BOARD_DIMENSION):
+            row_data = []
+            for c in range(g.BOARD_DIMENSION):
+                text = self.cells[(r, c)].get()
+                if text.isdigit():
+                    val = int(text)
+                else:
+                    val = 0
+                row_data.append(val)
+            board.append(row_data)
+        return board
 
     def on_generate_btn_click(self):
-        messagebox.showinfo("Trebuie implementata")
+        new_board = g.create_valid_board_structure()
+        self.fill_grid(new_board)
+        g.save_new_board(new_board)
 
     def solve_sudoku(self):
-        messagebox.showinfo("Trebuie implementata")
+        current_board = self.get_board_from_ui()
 
+        if not g.validate_board(current_board):
+            messagebox.showerror("Eroare", "Tabla introdusa este invalida (duplicate pe linii/coloane)!")
+            return
+        try:
+            solved_board = b.solve_sudoku_forward_checking(current_board)
 
-def main():
-    root = tk.Tk()
-    root.geometry("400x400")
-
-    all_data = g.load_all_boards()
-    key = f"{g.BOARD_DIMENSION}x{g.BOARD_DIMENSION}"
-    existing_boards = all_data.get(key, [])
-
-    if existing_boards:
-        start_board = existing_boards[0]
-        print("Main: Loaded board from JSON!")
-    else:
-        start_board = g.create_valid_board_structure()
-        g.save_new_board(start_board)
-        print("Main: Empty JSON, generated a new board!")
-
-    def handle_generate_new():
-        new_board = g.create_valid_board_structure()
-        g.save_new_board(new_board)
-        return new_board
-
-    app = SudokuUI(root, start_board, handle_generate_new)
-    root.mainloop()
+            if solved_board:
+                for r in range(g.BOARD_DIMENSION):
+                    for c in range(g.BOARD_DIMENSION):
+                        if self.cells[(r, c)].get() == "":
+                            self.cells[(r, c)].insert(0, str(solved_board[r][c]))
+                            self.cells[(r, c)].config(fg='green')
+                messagebox.showinfo("Succes", "Solutie gasita!")
+            else:
+                messagebox.showwarning("Esec", "Nu exista solutie pentru aceasta configuratie.")
+        except Exception as e:
+            messagebox.showerror("Eroare critica", f"A aparut o eroare in algoritm: {e}")
 
 
 if __name__ == '__main__':
-    main()
+    root = tk.Tk()
+    app = SudokuUI(root)
+    root.mainloop()
