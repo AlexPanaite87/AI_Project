@@ -1,20 +1,21 @@
 import copy
 import glue as g
 
-GRID_SIZE = g.BOARD_DIMENSION
-BLOCK_SIZE = g.BLOCK_SIZE
+
+def set_difficulty(value):
+    g.DIFFICULTY = value
 
 
 def get_empty_location(board):
-    for r in range(GRID_SIZE):
-        for c in range(GRID_SIZE):
+    for r in range(g.BOARD_DIMENSION):
+        for c in range(g.BOARD_DIMENSION):
             if board[r][c] == 0:
                 return r, c
     return None
 
 
 def forward_check(domains, r, c, val):
-    for i in range(GRID_SIZE):
+    for i in range(g.BOARD_DIMENSION):
         if i != c:
             if val in domains[r][i]:
                 domains[r][i].remove(val)
@@ -24,11 +25,11 @@ def forward_check(domains, r, c, val):
                 domains[i][c].remove(val)
                 if not domains[i][c]: return False
 
-    start_row = (r // BLOCK_SIZE) * BLOCK_SIZE
-    start_col = (c // BLOCK_SIZE) * BLOCK_SIZE
+    start_row = (r // g.BLOCK_SIZE) * g.BLOCK_SIZE
+    start_col = (c // g.BLOCK_SIZE) * g.BLOCK_SIZE
 
-    for i in range(start_row, start_row + BLOCK_SIZE):
-        for j in range(start_col, start_col + BLOCK_SIZE):
+    for i in range(start_row, start_row + g.BLOCK_SIZE):
+        for j in range(start_col, start_col + g.BLOCK_SIZE):
             if i == r and j == c:
                 continue
 
@@ -40,10 +41,10 @@ def forward_check(domains, r, c, val):
 
 
 def get_initial_domains(board):
-    full_domain = set(range(1, GRID_SIZE + 1))
-    domains = [[full_domain.copy() for _ in range(GRID_SIZE)] for _ in range(GRID_SIZE)]
-    for r in range(GRID_SIZE):
-        for c in range(GRID_SIZE):
+    full_domain = set(range(1, g.BOARD_DIMENSION + 1))
+    domains = [[full_domain.copy() for _ in range(g.BOARD_DIMENSION)] for _ in range(g.BOARD_DIMENSION)]
+    for r in range(g.BOARD_DIMENSION):
+        for c in range(g.BOARD_DIMENSION):
             val = board[r][c]
             if val != 0:
                 domains[r][c] = {val}

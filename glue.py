@@ -2,10 +2,20 @@ import math
 import random
 import os
 import json
+import brain
+
 
 BOARD_DIMENSION = 4
 BLOCK_SIZE = int(math.sqrt(BOARD_DIMENSION))
-FILENAME = 'sudoku_boards.json'
+DIFFICULTY = 1
+FILENAME = 'startup.json'
+
+
+def set_board_dimension(dimension):
+    if math.floor(math.sqrt(dimension)) == math.sqrt(dimension):
+        BOARD_DIMENSION = dimension
+    else:
+        BOARD_DIMENSION = input("Set a new board dimension (4, 9, etc): ")
 
 
 def validate_board(board):
@@ -14,10 +24,10 @@ def validate_board(board):
         if len(nums) != len(set(nums)):
             return False
 
-    for col_idx in range(BOARD_DIMENSION):
+    for col_index in range(BOARD_DIMENSION):
         nums = []
         for row_idx in range(BOARD_DIMENSION):
-            val = board[row_idx][col_idx]
+            val = board[row_idx][col_index]
             if val != 0:
                 nums.append(val)
         if len(nums) != len(set(nums)):
@@ -43,15 +53,13 @@ def create_valid_board_structure():
     for i in range(0, BOARD_DIMENSION, BLOCK_SIZE):
         nums = list(range(1, BOARD_DIMENSION + 1))
         random.shuffle(nums)
-        num_idx = 0
+        num_index = 0
         for r in range(BLOCK_SIZE):
             for c in range(BLOCK_SIZE):
-                board[i + r][i + c] = nums[num_idx]
-                num_idx += 1
+                board[i + r][i + c] = nums[num_index]
+                num_index += 1
 
     try:
-        import brain
-
         solved_board = brain.solve_sudoku_forward_checking(board)
 
         if solved_board is None:
@@ -59,11 +67,14 @@ def create_valid_board_structure():
 
         board = solved_board
     except Exception as e:
-        print(f"Eroare la generare cu Brain: {e}")
+        print(f"An error occurred while generating the board: {e}")
         return board
 
     total_cells = BOARD_DIMENSION * BOARD_DIMENSION
-    remove_percentage = 0.65
+    if DIFFICULTY == "0":
+        remove_percentage = 0.50
+    else:
+        remove_percentage = 0.80
     cells_to_remove = int(total_cells * remove_percentage)
 
     while cells_to_remove > 0:
@@ -100,4 +111,4 @@ def save_new_board(board):
         with open(FILENAME, 'w', encoding='utf-8') as f:
             json.dump(all_data, f, indent=4)
     except IOError as e:
-        print(f"Eroare la salvare: {e}")
+        print(f"An error occurred while saving the board: {e}")
