@@ -113,7 +113,7 @@ class SudokuUI:
                         entry = self.cells[r][c]
                         if entry.get() == "":
                             entry.insert(0, str(solved_board[r][c]))
-                            entry.config(fg='green')
+                            entry.config(fg='green', state='readonly')
                 messagebox.showinfo("Game Over", "Congratulations, you found the solution!")
             else:
                 messagebox.showwarning("Game Over", "No solution found.")
