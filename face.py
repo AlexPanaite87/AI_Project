@@ -3,119 +3,107 @@ from tkinter import messagebox
 import glue as g
 import brain as b
 
+GRID_SIZE = g.BOARD_DIMENSION
+BLOCK_SIZE = g.BLOCK_SIZE
+
 class SudokuUI:
     def __init__(self, root):
         self.root = root
-        self.root.title(f"Sudoku Solver")
+        self.root.title("Sudoku")
         self.cells = []
-        self.main_frame = tk.Frame(self.root, padx=10, pady=10)
-        self.main_frame.pack()
-
         self.configure_menu()
+
+        self.grid_frame = tk.Frame(self.root, padx=10, pady=10)
+        self.grid_frame.pack()
         self.create_grid_entries()
 
-        self.on_generate_button_click()
+        start_board = g.create_valid_board_structure()
+        self.display_grid(start_board)
 
     def configure_menu(self):
+        """Menu bar"""
         menu_bar = tk.Menu(self.root)
-        self.root.config(menu=menu_bar)
-
-        game_menu = tk.Menu(menu_bar, tearoff=0)
-        game_menu.add_command(label="New Game", command=self.on_generate_button_click)
+        game_menu = tk.Menu(menu_bar,tearoff=0)
+        game_menu.add_command(label="New Game", command=self.generate_new)
         game_menu.add_command(label="Solve", command=self.solve_sudoku)
         game_menu.add_separator()
-        game_menu.add_command(label="Exit", command=self.root.quit)
+        game_menu.add_command(label="Exit", command=self.exit_app)
         menu_bar.add_cascade(label="Game", menu=game_menu)
 
-        help_menu = tk.Menu(menu_bar, tearoff=0)
+        help_menu = tk.Menu(menu_bar, tearoff = 0)
         help_menu.add_command(label="About", command=self.show_about)
-        menu_bar.add_cascade(label="Help", menu=help_menu)
+        menu_bar.add_cascade(label ="Help", menu=help_menu)
+
+        self.root.config(menu=menu_bar)
+
+    def exit_app(self):
+        """Close the app"""
+        self.root.quit()
 
     def show_about(self):
-        message = f"Sudoku Solver using Forward Checking Algorithm.\n\nTeam:\n- Sorina (The Brain)\n- Iustina (The Face)\n- Alex (The Glue)"
-        messagebox.showinfo("About", message)
+        """About the app"""
+        about_text = "Sudoku Solver 4x4"
+        messagebox.showinfo("About Sudoku", about_text)
 
-    def create_grid_entries(self):
-        vcmd = (self.root.register(self.validate_input), '%P')
-
-        for r in range(g.BOARD_DIMENSION):
-            row_entries = []
-            for c in range(g.BOARD_DIMENSION):
-                block_row = r // g.BLOCK_SIZE
-                block_col = c // g.BLOCK_SIZE
-                is_colored = (block_row + block_col) % 2 == 0
-                bg_color = '#e6e6e6' if is_colored else 'white'
-
-                entry = tk.Entry(self.main_frame, width=3, font=('Arial', 20),
-                                 justify='center', bg=bg_color, relief='solid', bd=1,
-                                 validate='key', validatecommand=vcmd)
-
-                entry.grid(row=r, column=c, padx=1, pady=1, ipady=5)
-                row_entries.append(entry)
-            self.cells.append(row_entries)
-
-    def validate_input(self, new_value):
-        if new_value == "": return True
-
-        if not new_value.isdigit():
-            return False
-
-        val = int(new_value)
-        return 1 <= val <= g.BOARD_DIMENSION
-
-    def display_grid(self, board):
-        for r in range(g.BOARD_DIMENSION):
-            for c in range(g.BOARD_DIMENSION):
-                entry = self.cells[r][c]
-                val = board[r][c]
-
-                entry.config(state='normal')
-                entry.delete(0, tk.END)
-
-                if val != 0:
-                    entry.insert(0, str(val))
-                    entry.config(state='readonly', fg='#170170', readonlybackground=entry.cget('bg'))
-                else:
-                    entry.config(state='normal', fg='black')
-
-    def get_board_from_ui(self):
-        board = []
-        for r in range(g.BOARD_DIMENSION):
-            row_data = []
-            for c in range(g.BOARD_DIMENSION):
-                entry = self.cells[r][c]
-                text = entry.get()
-                if text.isdigit():
-                    val = int(text)
-                else:
-                    val = 0
-                row_data.append(val)
-            board.append(row_data)
-        return board
-
-    def on_generate_button_click(self):
+    def generate_new(self):
+        """Generates a new puzzle"""
         new_board = g.create_valid_board_structure()
         self.display_grid(new_board)
-        g.save_new_board(new_board)
+        messagebox.showinfo("New Puzzle", "A new Sudoku puzzle has been generated")
+
+    def get_current_grid_state(self):
+        grid =[]
+        for row in range(GRID_SIZE):
+            row_data = []
+            for col in range(GRID_SIZE):
+                value=self.cells[row][col].get()
+                try:
+                    row_data.append(int(value))
+                except ValueError:
+                    row_data.append(0)
+            grid.append(row_data)
+        return grid
 
     def solve_sudoku(self):
-        current_board = self.get_board_from_ui()
+        current_grid = self.get_current_grid_state()
+        solved_board = b.solve_sudoku_forward_checking(current_grid)
 
-        if not g.validate_board(current_board):
-            messagebox.showerror("Error", "Invalid solution! (duplicated elements on rows / columns / blocks)!")
-            return
-        try:
-            solved_board = b.solve_sudoku_forward_checking(current_board)
+        if solved_board:
+            self.display_grid(solved_board)
+            messagebox.showinfo("Success", "Sudoku solved")
+        else:
+            messagebox.showerror("Error", "The Sudoku has no valid solution")
 
-            if solved_board:
-                for r in range(g.BOARD_DIMENSION):
-                    for c in range(g.BOARD_DIMENSION):
-                        entry = self.cells[r][c]
-                        if entry.get() == "":
-                            entry.insert(0, str(solved_board[r][c]))
-                            entry.config(fg='green', state='readonly')
-                messagebox.showinfo("Game Over", "Congratulations, you found the solution!")
-            else:
-                messagebox.showwarning("Game Over", "No solution found.")
-        except Exception as e:
-            messagebox.showerror("Critical Error", f"An error occurred in the algorithm: {e}")
+    def create_grid_entries(self):
+        """Create grids"""
+        for row in range(GRID_SIZE):
+            row_entries =[]
+            for col in range(GRID_SIZE):
+                cell_entry = tk.Entry(
+                    self.grid_frame,
+                    width=2,
+                    font=('Arial', 18, 'bold'),
+                    justify='center',
+                    relief='solid',
+                    bd=1
+                )
+                cell_entry.grid(row=row, column = col, padx=1,pady=1,ipadx=5,ipady=5)
+                row_entries.append(cell_entry)
+            self.cells.append(row_entries)
+
+    def display_grid(self,board):
+        """Displays the board values in the Entry widgets and sets initial cells to readonly"""
+        self.initial_board = [row[:] for row in board]
+
+        for row in range(GRID_SIZE):
+            for col in range(GRID_SIZE):
+                value = board[row][col]
+                entry=self.cells[row][col]
+                entry.config(state='normal')
+                entry.delete(0,tk.END)
+
+                if value!= 0:
+                    entry.insert(0,str(value))
+                    entry.config(state='readonly', readonlybackground = 'lightgray', fg='blue')
+                else:
+                    entry.config(state='normal', fg='black', readonlybackground ='white', bg='white')
