@@ -1,9 +1,4 @@
-import copy
 import glue as g
-
-
-def set_difficulty(value):
-    g.DIFFICULTY = value
 
 
 def get_empty_location(board):
@@ -15,61 +10,62 @@ def get_empty_location(board):
 
 
 def forward_check(domains, r, c, val):
+
+    marks = []
+
+    neighbors = set()
     for i in range(g.BOARD_DIMENSION):
-        if i != c:
-            if val in domains[r][i]:
-                domains[r][i].remove(val)
-                if not domains[r][i]: return False
-        if i != r:
-            if val in domains[i][c]:
-                domains[i][c].remove(val)
-                if not domains[i][c]: return False
+        if i != c: neighbors.add((r, i))
+        if i != r: neighbors.add((i, c))
 
     start_row = (r // g.BLOCK_SIZE) * g.BLOCK_SIZE
     start_col = (c // g.BLOCK_SIZE) * g.BLOCK_SIZE
 
     for i in range(start_row, start_row + g.BLOCK_SIZE):
         for j in range(start_col, start_col + g.BLOCK_SIZE):
-            if i == r and j == c:
-                continue
+            if (i, j) != (r, c):
+                neighbors.add((i, j))
 
-            if val in domains[i][j]:
-                domains[i][j].remove(val)
-                if not domains[i][j]: return False
-
-    return True
-
+    for nr, nc in neighbors:
+        if val in domains[nr][nc]:
+            domains[nr][nc].remove(val)
+            marks.append((nr, nc, val))
+            if not domains[nr][nc]:
+                return False, marks
+    return True, marks
 
 def get_initial_domains(board):
     full_domain = set(range(1, g.BOARD_DIMENSION + 1))
     domains = [[full_domain.copy() for _ in range(g.BOARD_DIMENSION)] for _ in range(g.BOARD_DIMENSION)]
+
     for r in range(g.BOARD_DIMENSION):
         for c in range(g.BOARD_DIMENSION):
             val = board[r][c]
             if val != 0:
                 domains[r][c] = {val}
-                if not forward_check(domains, r, c, val):
+                valid, _ = forward_check(domains, r, c, val)
+                if not valid:
                     return None
     return domains
 
 
 def backtrack(board, domains):
-    empty_loc = get_empty_location(board)
-    if not empty_loc:
+    empty_location = get_empty_location(board)
+    if not empty_location:
         return board
 
-    row, col = empty_loc
-    possible_values = list(domains[row][col])
-    possible_values.sort()
+    row, col = empty_location
+    possible_values = sorted(list(domains[row][col]))
 
     for val in possible_values:
         board[row][col] = val
-        new_domains = copy.deepcopy(domains)
-        new_domains[row][col] = {val}
-        if forward_check(new_domains, row, col, val):
-            result = backtrack(board, new_domains)
+        valid, marks = forward_check(domains, row, col, val)
+        if valid:
+            result = backtrack(board, domains)
             if result:
                 return result
+        for (marked_row, marked_col, marked_val) in marks:
+            domains[marked_row][marked_col].add(marked_val)
         board[row][col] = 0
 
     return None

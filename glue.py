@@ -7,16 +7,18 @@ import brain
 
 BOARD_DIMENSION = 4
 BLOCK_SIZE = int(math.sqrt(BOARD_DIMENSION))
-DIFFICULTY = 1
+DIFFICULTY = 0
 FILENAME = 'startup.json'
 
+def set_dimension(dimension):
+    global BOARD_DIMENSION
+    BOARD_DIMENSION = dimension
+    global BLOCK_SIZE
+    BLOCK_SIZE = int(math.sqrt(BOARD_DIMENSION))
 
-def set_board_dimension(dimension):
-    if math.floor(math.sqrt(dimension)) == math.sqrt(dimension):
-        BOARD_DIMENSION = dimension
-    else:
-        BOARD_DIMENSION = input("Set a new board dimension (4, 9, etc): ")
-
+def set_difficulty(difficulty):
+    global DIFFICULTY
+    DIFFICULTY = difficulty
 
 def validate_board(board):
     for row in board:
@@ -48,34 +50,35 @@ def validate_board(board):
 
 
 def create_valid_board_structure():
-    board = [[0] * BOARD_DIMENSION for _ in range(BOARD_DIMENSION)]
+    while True:
+        board = [[0] * BOARD_DIMENSION for _ in range(BOARD_DIMENSION)]
 
-    for i in range(0, BOARD_DIMENSION, BLOCK_SIZE):
-        nums = list(range(1, BOARD_DIMENSION + 1))
-        random.shuffle(nums)
-        num_index = 0
-        for r in range(BLOCK_SIZE):
-            for c in range(BLOCK_SIZE):
-                board[i + r][i + c] = nums[num_index]
-                num_index += 1
+        for i in range(0, BOARD_DIMENSION, BLOCK_SIZE):
+            nums = list(range(1, BOARD_DIMENSION + 1))
+            random.shuffle(nums)
+            num_index = 0
+            for r in range(BLOCK_SIZE):
+                for c in range(BLOCK_SIZE):
+                    board[i + r][i + c] = nums[num_index]
+                    num_index += 1
 
-    try:
-        solved_board = brain.solve_sudoku_forward_checking(board)
+        try:
 
-        if solved_board is None:
-            return board
+            solved_board = brain.solve_sudoku_forward_checking(board)
 
-        board = solved_board
-    except Exception as e:
-        print(f"An error occurred while generating the board: {e}")
-        return board
+            if solved_board is not None:
+                board = solved_board
+                break
+
+        except Exception as e:
+            continue
 
     total_cells = BOARD_DIMENSION * BOARD_DIMENSION
-    if DIFFICULTY == "0":
-        remove_percentage = 0.50
+    if DIFFICULTY == 0:
+        remove_percentage = 0.65
     else:
-        remove_percentage = 0.80
-    cells_to_remove = int(total_cells * remove_percentage)
+        remove_percentage = 0.9
+    cells_to_remove = math.floor(total_cells * remove_percentage)
 
     while cells_to_remove > 0:
         row = random.randint(0, BOARD_DIMENSION - 1)
