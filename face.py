@@ -10,20 +10,21 @@ class StartScreen:
 
         self.frame = tk.Frame(root,padx=20, pady=20)
         self.frame.pack()
+
         tk.Label(self.frame, text="Choose dimension and difficulty:", font=('Arial', 14)).pack(pady=10)
+        self.start_menu_button = tk.Menubutton(self.frame, text="Start game", relief=tk.RAISED, font=('Arial',12), padx=10, pady=5,direction='below')
+        self.start_menu_button.pack(pady=20)
+        self.start_menu = tk.Menu(self.start_menu_button, tearoff=0)
+        self.start_menu_button.config(menu=self.start_menu)
 
-        self.dimension_var = tk.IntVar(value=0)
-        self.difficulty_var = tk.IntVar(value=0)
+        self.start_menu.add_command(label="4x4(Easy)", command=lambda:self.start_game(4,0))
+        self.start_menu.add_command(label="4x4(Hard)", command=lambda: self.start_game(4, 1))
+        self.start_menu.add_command(label="9x9(Easy)", command=lambda: self.start_game(9, 0))
+        self.start_menu.add_command(label="9x9(Hard)", command=lambda: self.start_game(9, 1))
 
-        tk.Button(self.frame, text="4x4", command=lambda: self.start_game(4), font=('Arial', 12), padx=10, pady=5).pack(pady=5)
-        tk.Button(self.frame, text="9x9", command=lambda: self.start_game(9), font=('Arial', 12), padx=10, pady=5).pack(pady=5)
-
-        tk.Radiobutton(self.frame, text="Easy", variable=self.difficulty_var, value=0, font=('Arial', 11)).pack()
-        tk.Radiobutton(self.frame, text="Hard", variable=self.difficulty_var, value=1, font=('Arial', 11)).pack()
-
-    def start_game(self, dim):
-        g.set_dimension(dim)
-        g.set_difficulty(self.difficulty_var.get())
+    def start_game(self, dimension, difficulty):
+        g.set_dimension(dimension)
+        g.set_difficulty(difficulty)
         self.frame.destroy()
         SudokuUI(self.root)
 
