@@ -11,16 +11,22 @@ DIFFICULTY = 0
 FILENAME = 'startup.json'
 
 def set_dimension(dimension):
+    """Seteaza dimensiunea globala a tablei si recalculeaza dimensiunea sub-blocurilor"""
     global BOARD_DIMENSION
     BOARD_DIMENSION = dimension
     global BLOCK_SIZE
     BLOCK_SIZE = int(math.sqrt(BOARD_DIMENSION))
 
 def set_difficulty(difficulty):
+    """Seteaza nivelul de dificultate"""
     global DIFFICULTY
     DIFFICULTY = difficulty
 
 def validate_board(board):
+    """
+    Verifica daca tabla curenta respecta regulile Sudoku
+    Returneaza False daca sunt duplicate pe linii, coloane, patrate
+    """
     for row in board:
         nums = [n for n in row if n != 0]
         if len(nums) != len(set(nums)):
@@ -50,6 +56,10 @@ def validate_board(board):
 
 
 def create_valid_board_structure():
+    """
+    Genereaza un puzzle nou Sudoku
+    Umple tot, dupa care sterge aleatoriu
+    """
     while True:
         board = [[0] * BOARD_DIMENSION for _ in range(BOARD_DIMENSION)]
 
@@ -92,6 +102,7 @@ def create_valid_board_structure():
 
 
 def load_all_boards():
+    """Incarca istoricul tablelor din fisierul JSON"""
     if not os.path.exists(FILENAME):
         return {}
     try:
@@ -102,6 +113,7 @@ def load_all_boards():
 
 
 def save_new_board(board):
+    """Salveaza tabla nou generata in fisierul JSON"""
     all_data = load_all_boards()
     board_key = f"{BOARD_DIMENSION}x{BOARD_DIMENSION}"
 
