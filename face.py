@@ -7,7 +7,7 @@ class StartScreen:
     def __init__(self, root):
         """Initializarea ecranului principal pentru alegerea dificulatii si a dimensiunii"""
         self.root = root
-        root.title("Select Sudoku size:")
+        root.title("Select Sudoku settings")
 
         self.frame = tk.Frame(root,padx=20, pady=20)
         self.frame.pack()
@@ -97,12 +97,6 @@ class SudokuUI:
         about_text = "Sudoku Solver using Forward Checking Algorithm.\n\nTeam:\n- Sorina (The Brain)\n- Iustina (The Face)\n- Alex (The Glue)"
         messagebox.showinfo("About Sudoku", about_text)
 
-    def generate_new(self):
-        """Generarea unui nou joc"""
-        new_board = g.create_valid_board_structure()
-        self.display_grid(new_board)
-        messagebox.showinfo("New Game", "A new Sudoku game has been generated")
-
     def get_current_grid_state(self):
         """Functie ajutatoare - ia toate valorile(atat cele generate initial, cat si cele scrise de utilizator) si le returneaza sub forma de matrice pentru verificarile urmatoare """
         grid =[]
@@ -120,38 +114,35 @@ class SudokuUI:
     def solve_sudoku(self):
         """Rezolvarea jocului curent automat"""
         current_grid = self.get_current_grid_state()
-        solved_board = b.solve_sudoku_forward_checking(current_grid)
-
-        if solved_board:
-            self.display_grid(solved_board)
-            messagebox.showinfo("Success", "Sudoku solved")
-        else:
-            messagebox.showerror("Error", "The Sudoku has no valid solution")
+        if not g.validate_board(current_grid):
+            messagebox.showerror("Error", "Invalid solution!")
+            return
+        try:
+            solved_board = b.solve_sudoku_forward_checking(current_grid)
+            if solved_board:
+                for row in range(g.BOARD_DIMENSION):
+                    for col in range(g.BOARD_DIMENSION):
+                        entry = self.cells[row][col]
+                        if entry.get() == "":
+                            entry.insert(0,str(solved_board[row][col]))
+                            entry.config(fg="green", state='readonly',readonlybackground=entry.cget('bg'))
+                messagebox.showinfo("Success", "Sudoku solved")
+            else:
+                messagebox.showerror("Error", "The Sudoku has no valid solution")
+        except ValueError:
+            messagebox.showerror("Error")
 
     def create_grid_entries(self):
         """Desenarea casutelor pe ecran si asezarea acestora"""
         for row in range(g.BOARD_DIMENSION):
             row_entries =[]
             for col in range(g.BOARD_DIMENSION):
-                if col % g.BLOCK_SIZE == 0:
-                    left_border = 5
+                block_row = row // g.BLOCK_SIZE
+                block_col = col // g.BLOCK_SIZE
+                if (block_row + block_col)%2 == 0:
+                    bg_color = 'lightgray'
                 else:
-                    left_border = 1
-
-                if row % g.BLOCK_SIZE == 0:
-                    top_border = 5
-                else:
-                    top_border = 1
-
-                if col == g.BOARD_DIMENSION -1:
-                    right_border = 5
-                else:
-                    right_border = 1
-
-                if row == g.BOARD_DIMENSION -1:
-                    bottom_border = 5
-                else:
-                    bottom_border = 1
+                    bg_color = 'white'
 
                 cell_entry = tk.Entry(
                     self.grid_frame,
@@ -159,30 +150,29 @@ class SudokuUI:
                     font=('Arial', 18, 'bold'),
                     justify='center',
                     relief='solid',
+                    bg=bg_color,
                     bd=1,
                     validate='key',
                     validatecommand=self.validate
                 )
-                cell_entry.grid(row=row, column = col, padx=(left_border, right_border),pady=(top_border,bottom_border),ipadx=5,ipady=5)
+                cell_entry.grid(row=row, column = col, padx=1,pady=1,ipadx=5,ipady=5)
                 row_entries.append(cell_entry)
             self.cells.append(row_entries)
 
     def display_grid(self,board):
         """Afisarea numerelor si blocarea casutelor care au fost completate initial"""
-        self.initial_board = [row[:] for row in board]
-
         for row in range(g.BOARD_DIMENSION):
             for col in range(g.BOARD_DIMENSION):
+                entry = self.cells[row][col]
                 value = board[row][col]
-                entry=self.cells[row][col]
-                entry.config(state='normal',bg='white',fg='black')
+                entry.config(state='normal')
                 entry.delete(0,tk.END)
 
                 if value!= 0:
                     entry.insert(0,str(value))
-                    entry.config(state='readonly', readonlybackground = 'lightgray', fg='blue')
+                    entry.config(state='readonly', readonlybackground = entry.cget('bg'), fg='blue')
                 else:
-                    entry.config(state='normal', fg='black', readonlybackground ='white', bg='white')
+                    entry.config(state='normal', fg='black')
 
     def start_predefined_game(self,dimension, difficulty):
         """Reincarcarea interfetei cu noile setari alese din meniu(dimensiunea si dificultatea jocului)"""
