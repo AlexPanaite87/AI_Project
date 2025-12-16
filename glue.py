@@ -25,7 +25,7 @@ def set_difficulty(difficulty):
 def validate_board(board):
     """
     Verifica daca tabla curenta respecta regulile Sudoku
-    Returneaza False daca sunt duplicate pe linii, coloane, patrate
+    Returneaza False daca sunt duplicate pe linii, coloane, blocuri
     """
     for row in board:
         nums = [n for n in row if n != 0]

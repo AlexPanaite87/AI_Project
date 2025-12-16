@@ -2,7 +2,7 @@ import glue as g
 
 
 def get_empty_location(board):
-    """Identifica prima celula goala din matrice(cu valoarea 0) si ii returneaza coordonatele"""
+    """Identifica prima celula goala din matrice (cu valoarea 0) si ii returneaza coordonatele"""
     for r in range(g.BOARD_DIMENSION):
         for c in range(g.BOARD_DIMENSION):
             if board[r][c] == 0:
@@ -12,7 +12,7 @@ def get_empty_location(board):
 
 def forward_check(domains, r, c, val):
     """
-    Elimina valoarea val din domeniile tuturor vecinilor(linie, coloana, bloc)
+    Elimina valoarea val din domeniile tuturor vecinilor (linie, coloana, bloc)
     Returneaza true si o lista marks cu modificarile facute pentru Backtracking
     """
     marks = []

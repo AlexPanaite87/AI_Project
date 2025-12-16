@@ -3,6 +3,7 @@ from tkinter import messagebox
 import glue as g
 import brain as b
 
+
 class StartScreen:
     def __init__(self, root):
         """Initializarea ecranului principal pentru alegerea dificulatii si a dimensiunii"""
@@ -71,10 +72,10 @@ class SudokuUI:
         game_menu = tk.Menu(menu_bar,tearoff=0)
 
         new_game_menu = tk.Menu(game_menu, tearoff=0)
-        new_game_menu.add_command(label="4x4(Easy)", command=lambda: self.start_predefined_game(4, 0))
-        new_game_menu.add_command(label="4x4(Hard)", command=lambda: self.start_predefined_game(4, 1))
-        new_game_menu.add_command(label="9x9(Easy)", command=lambda: self.start_predefined_game(9, 0))
-        new_game_menu.add_command(label="9x9(Hard)", command=lambda: self.start_predefined_game(9, 1))
+        new_game_menu.add_command(label="4x4 (Easy)", command=lambda: self.start_predefined_game(4, 0))
+        new_game_menu.add_command(label="4x4 (Hard)", command=lambda: self.start_predefined_game(4, 1))
+        new_game_menu.add_command(label="9x9 (Easy)", command=lambda: self.start_predefined_game(9, 0))
+        new_game_menu.add_command(label="9x9 (Hard)", command=lambda: self.start_predefined_game(9, 1))
         game_menu.add_cascade(label="New Game", menu=new_game_menu)
 
         game_menu.add_command(label="Solve", command=self.solve_sudoku)
@@ -115,7 +116,7 @@ class SudokuUI:
         """Rezolvarea jocului curent automat"""
         current_grid = self.get_current_grid_state()
         if not g.validate_board(current_grid):
-            messagebox.showerror("Error", "Invalid solution!")
+            messagebox.showerror("Error", "Invalid solution: duplicate values on a column / row / block!")
             return
         try:
             solved_board = b.solve_sudoku_forward_checking(current_grid)
@@ -126,9 +127,9 @@ class SudokuUI:
                         if entry.get() == "":
                             entry.insert(0,str(solved_board[row][col]))
                             entry.config(fg="green", state='readonly',readonlybackground=entry.cget('bg'))
-                messagebox.showinfo("Success", "Sudoku solved")
+                messagebox.showinfo("Success", "Sudoku solved!")
             else:
-                messagebox.showerror("Error", "The Sudoku has no valid solution")
+                messagebox.showerror("Error", "The board has no valid solution!")
         except ValueError:
             messagebox.showerror("Error")
 
